@@ -1,7 +1,8 @@
 const os = require("os");
 
 function normalizeVersionName(version) {
-  return version.replace(/^nightly-[0-9a-f]{40}$/, "nightly");
+  // Replace the nightly hash with "latest" instead of "nightly"
+  return version.replace(/^nightly-[0-9a-f]{40}$/, "latest");
 }
 
 function mapArch(arch) {
