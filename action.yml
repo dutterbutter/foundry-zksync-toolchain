@@ -29,7 +29,7 @@ inputs:
       This key is used to identify the cache to restore. If not provided, a default key consisting of the job id is used.
     required: false
   version:
-    default: "nightly"
+    default: "latest"
     description: |
       Foundry-ZKsync version.
 
