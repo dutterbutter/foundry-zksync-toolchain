@@ -26,7 +26,7 @@ function getLatestReleaseTag() {
         res.on("end", () => {
           try {
             const release = JSON.parse(data);
-            // Expecting a tag name like "v0.0.9"
+            // The API returns tag_name, e.g., "foundry-zksync-v0.0.9"
             resolve(release.tag_name);
           } catch (err) {
             reject(new Error("Failed to parse latest release tag"));
@@ -38,27 +38,36 @@ function getLatestReleaseTag() {
 }
 
 /**
- * Returns a promise resolving to an object with the download URL and binPath.
+ * Constructs the download object.
  *
- * - If no version is specified or version === "latest", it fetches the latest release tag
- *   (e.g. "v0.0.9") and constructs the URL accordingly.
- * - If a version is provided and it starts with "foundry-zksync-", that prefix is used
- *   for the folder name, while being stripped for the filename.
- * - Otherwise, if a version like "v0.0.7" is provided, the folder name is built as
- *   "foundry-zksync-v0.0.7" and the filename uses "v0.0.7".
+ * - For a missing version or when version === "latest":
+ *    - Fetch the latest release tag (e.g., "foundry-zksync-v0.0.9").
+ *    - Use that as the folder name.
+ *    - Remove the "foundry-zksync-" prefix to construct the asset filename.
+ *
+ * - For user-specified versions:
+ *    - If the version starts with "foundry-zksync-", we use it directly as the folder name
+ *      and strip the prefix for the filename.
+ *    - Otherwise, we prepend "foundry-zksync-" to the version for the folder name.
+ *
+ * The resulting URL is constructed as:
+ * https://github.com/matter-labs/foundry-zksync/releases/download/<folderName>/foundry_zksync_<version>_<platform>_<arch>.<extension>
  */
 async function getDownloadObject(version = "latest") {
-  let tag;
   let folderName;
   let rawVersionForFilename;
 
   if (!version || version === "latest") {
-    // When "latest" is requested, fetch the latest release tag from GitHub API.
-    tag = await getLatestReleaseTag();
-    folderName = `foundry-zksync-${tag}`;
-    rawVersionForFilename = tag;
+    const tag = await getLatestReleaseTag();
+    // If the tag already includes the prefix, use it directly.
+    if (tag.startsWith("foundry-zksync-")) {
+      folderName = tag;
+      rawVersionForFilename = tag.substring("foundry-zksync-".length);
+    } else {
+      folderName = `foundry-zksync-${tag}`;
+      rawVersionForFilename = tag;
+    }
   } else {
-    // If the user supplies a version manually.
     if (version.startsWith("foundry-zksync-")) {
       folderName = version;
       rawVersionForFilename = version.substring("foundry-zksync-".length);
