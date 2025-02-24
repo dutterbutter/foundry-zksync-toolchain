@@ -11,7 +11,7 @@ async function main() {
     const version = core.getInput("version");
 
     // Download the archive containing the binaries
-    const download = getDownloadObject(version);
+    const download = await getDownloadObject(version);
     console.log("DOWNLOAD", download);
     core.info(`Downloading Foundry '${version}' from: ${download.url}`);
     console.log("DOWNLOAD URL", download.url);
