@@ -86315,11 +86315,8 @@ async function main() {
 
     // Download the archive containing the binaries
     const download = await getDownloadObject(version);
-    console.log("DOWNLOAD", download);
     core.info(`Downloading Foundry '${version}' from: ${download.url}`);
-    console.log("DOWNLOAD URL", download.url);
     const pathToArchive = await toolCache.downloadTool(download.url);
-    console.log("PATH TO ARCHIVE", pathToArchive);
     // Extract the archive onto host runner
     core.debug(`Extracting ${pathToArchive}`);
     const extract = download.url.endsWith(".zip") ? toolCache.extractZip : toolCache.extractTar;
@@ -86367,35 +86364,15 @@ function mapArch(arch) {
   return mappings[arch] || arch;
 }
 
-function getLatestReleaseTag() {
-  console.log("Fetching latest release tag");
-  const options = {
-    hostname: "api.github.com",
-    path: "/repos/matter-labs/foundry-zksync/releases/latest",
-    headers: {
-      "User-Agent": "node.js",
-    },
-  };
-
-  return new Promise((resolve, reject) => {
-    https
-      .get(options, (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            console.log("DATA", data);
-            const release = JSON.parse(data);
-            // The API returns tag_name, e.g., "foundry-zksync-v0.0.9"
-            resolve(release.tag_name);
-          } catch (err) {
-            reject(new Error("Failed to parse latest release tag"));
-          }
-        });
-      })
-      .on("error", reject);
-  });
-}
+const getLatestReleaseTag = async () => {
+  const url = "https://api.github.com/repos/matter-labs/foundry-zksync/releases/latest";
+  const response = await fetch(url, { headers: { "User-Agent": "node.js" } });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch latest release tag: ${response.statusText}`);
+  }
+  const release = await response.json();
+  return release.tag_name;
+};
 
 /**
  * Constructs the download object.
@@ -86419,7 +86396,6 @@ async function getDownloadObject(version = "latest") {
 
   if (!version || version === "latest") {
     const tag = await getLatestReleaseTag();
-    console.log("TAG", tag);
     // If the tag already includes the prefix, use it directly.
     if (tag.startsWith("foundry-zksync-")) {
       folderName = tag;
@@ -86437,15 +86413,13 @@ async function getDownloadObject(version = "latest") {
       rawVersionForFilename = version;
     }
   }
-  console.log("rawVersionForFilename", rawVersionForFilename);
   const platform = os.platform();
   const arch = mapArch(os.arch());
   const filename = `foundry_zksync_${rawVersionForFilename}_${platform}_${arch}`;
-  console.log("filename", filename);
   const extension = platform === "win32" ? "zip" : "tar.gz";
 
   const url = `https://github.com/matter-labs/foundry-zksync/releases/download/${folderName}/${filename}.${extension}`;
-  console.log("url", url);
+
   return {
     url,
     binPath: ".",

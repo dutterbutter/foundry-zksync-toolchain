@@ -12,11 +12,8 @@ async function main() {
 
     // Download the archive containing the binaries
     const download = await getDownloadObject(version);
-    console.log("DOWNLOAD", download);
     core.info(`Downloading Foundry '${version}' from: ${download.url}`);
-    console.log("DOWNLOAD URL", download.url);
     const pathToArchive = await toolCache.downloadTool(download.url);
-    console.log("PATH TO ARCHIVE", pathToArchive);
     // Extract the archive onto host runner
     core.debug(`Extracting ${pathToArchive}`);
     const extract = download.url.endsWith(".zip") ? toolCache.extractZip : toolCache.extractTar;
