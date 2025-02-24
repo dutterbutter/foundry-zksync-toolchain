@@ -9,7 +9,7 @@ async function main() {
   try {
     // Get version input
     const version = core.getInput("version");
-
+    
     // Download the archive containing the binaries
     const download = getDownloadObject(version);
     core.info(`Downloading Foundry '${version}' from: ${download.url}`);
