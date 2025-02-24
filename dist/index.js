@@ -86366,6 +86366,7 @@ function mapArch(arch) {
 }
 
 function getLatestReleaseTag() {
+  console.log("Fetching latest release tag");
   const options = {
     hostname: "api.github.com",
     path: "/repos/matter-labs/foundry-zksync/releases/latest",
@@ -86381,6 +86382,7 @@ function getLatestReleaseTag() {
         res.on("data", (chunk) => (data += chunk));
         res.on("end", () => {
           try {
+            console.log("DATA", data);
             const release = JSON.parse(data);
             // The API returns tag_name, e.g., "foundry-zksync-v0.0.9"
             resolve(release.tag_name);
@@ -86415,6 +86417,7 @@ async function getDownloadObject(version = "latest") {
 
   if (!version || version === "latest") {
     const tag = await getLatestReleaseTag();
+    console.log("TAG", tag);
     // If the tag already includes the prefix, use it directly.
     if (tag.startsWith("foundry-zksync-")) {
       folderName = tag;
@@ -86432,14 +86435,15 @@ async function getDownloadObject(version = "latest") {
       rawVersionForFilename = version;
     }
   }
-
+  console.log("rawVersionForFilename", rawVersionForFilename);
   const platform = os.platform();
   const arch = mapArch(os.arch());
   const filename = `foundry_zksync_${rawVersionForFilename}_${platform}_${arch}`;
+  console.log("filename", filename);
   const extension = platform === "win32" ? "zip" : "tar.gz";
 
   const url = `https://github.com/matter-labs/foundry-zksync/releases/download/${folderName}/${filename}.${extension}`;
-
+  console.log("url", url);
   return {
     url,
     binPath: ".",
