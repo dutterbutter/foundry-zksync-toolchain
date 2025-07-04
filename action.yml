@@ -36,6 +36,10 @@ inputs:
       This version number has to match a released version of Foundry ZKsync.
       The default value is `nightly`, which will pull the latest nightly build.
     required: false
+  token:
+    description: "PAT or GITHUB_TOKEN used to call the GitHub API"
+    required: false
+    default: ${{ github.token }}
 
 runs:
   using: "node20"
