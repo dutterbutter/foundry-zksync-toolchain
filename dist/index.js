@@ -86302,6 +86302,7 @@ const State = {
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 const core = __nccwpck_require__(2186);
+const github     = __nccwpck_require__(5438); 
 const toolCache = __nccwpck_require__(7784);
 const path = __nccwpck_require__(1017);
 
@@ -86313,10 +86314,18 @@ async function main() {
     // Get version input
     const version = core.getInput("version");
 
+    const token   = core.getInput("token") || process.env.GITHUB_TOKEN;
+    const octokit = github.getOctokit(token);
+
     // Download the archive containing the binaries
-    const download = await getDownloadObject(version);
+    const download = await getDownloadObject(version, octokit);
     core.info(`Downloading Foundry '${version}' from: ${download.url}`);
-    const pathToArchive = await toolCache.downloadTool(download.url);
+    const pathToArchive =
+      await toolCache.downloadTool(
+        download.url,
+        undefined,
+        `token ${token}`
+      );
     // Extract the archive onto host runner
     core.debug(`Extracting ${pathToArchive}`);
     const extract = download.url.endsWith(".zip") ? toolCache.extractZip : toolCache.extractTar;
