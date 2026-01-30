@@ -1,6 +1,7 @@
-## `foundry-zksync-toolchain` Action
+## `foundry-zksync-toolchain` Action 🚀
 
-🚀 **This repository is a fork of the `foundry-toolchain` action, adapted to support `foundry-zksync`, which is a fork of Foundry.**
+ **This repository is a fork of the `foundry-toolchain` action, adapted to support `foundry-zksync`, which is a fork of Foundry.**
+
 💡 Full credit goes to the original authors for their work! 🙏
 
 This GitHub Action installs [Foundry-ZKsync](https://github.com/matter-labs/foundry-zksync), the blazing fast, portable and modular
