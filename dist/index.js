@@ -49297,7 +49297,7 @@ const os = __importStar(__nccwpck_require__(70857));
 const path = __importStar(__nccwpck_require__(16928));
 const cache_js_1 = __nccwpck_require__(97377);
 const FOUNDRY_ZKSYNC_REPO = "matter-labs/foundry-zksync";
-const FOUNDRY_TOOLS = ["forge", "cast", "anvil", "chisel"];
+const FOUNDRY_TOOLS = ["forge", "cast"];
 function mapArch(arch) {
     const mappings = {
         x32: "386",

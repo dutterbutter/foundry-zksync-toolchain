@@ -7,7 +7,7 @@ import * as path from "path";
 import { restoreCache } from "./cache.js";
 
 const FOUNDRY_ZKSYNC_REPO = "matter-labs/foundry-zksync";
-const FOUNDRY_TOOLS = ["forge", "cast", "anvil", "chisel"];
+const FOUNDRY_TOOLS = ["forge", "cast"];
 
 function mapArch(arch: string): string {
   const mappings: Record<string, string> = {

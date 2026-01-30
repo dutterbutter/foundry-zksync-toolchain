@@ -76,15 +76,8 @@ jobs:
       - name: Verify Foundry installation (${{ matrix.network }})
         shell: bash
         run: |
-          if [[ "${{ matrix.network }}" == "tempo" ]]; then
-            forge --version
-            cast --version
-          else
-            forge --version
-            cast --version
-            anvil --version
-            chisel --version
-          fi
+          forge --version
+          cast --version
 
       - name: Test basic Foundry functionality (${{ matrix.network }})
         shell: bash
