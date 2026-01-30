@@ -1,6 +1,7 @@
-## `foundry-zksync-toolchain` Action
+## `foundry-zksync-toolchain` Action 🚀
 
-🚀 **This repository is a fork of the `foundry-toolchain` action, adapted to support `foundry-zksync`, which is a fork of Foundry.**  
+ **This repository is a fork of the `foundry-toolchain` action, adapted to support `foundry-zksync`, which is a fork of Foundry.**
+
 💡 Full credit goes to the original authors for their work! 🙏
 
 This GitHub Action installs [Foundry-ZKsync](https://github.com/matter-labs/foundry-zksync), the blazing fast, portable and modular
@@ -9,23 +10,43 @@ toolkit for ZKsync application development.
 ### Example workflow
 
 ```yml
-on: [push]
+name: CI
 
-name: test
+permissions: {}
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: ci
 
 jobs:
   check:
     name: Foundry ZKsync project
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           submodules: recursive
 
       - name: Install Foundry-ZKsync
         uses: dutterbutter/foundry-zksync-toolchain@v1
 
-      - name: Run tests
+      - name: Show Forge version
+        run: forge --version
+
+      - name: Run Forge fmt
+        run: forge fmt --check
+
+      - name: Run Forge build
+        run: forge build --zksync --sizes
+
+      - name: Run Forge tests
         run: forge test --zksync -vvv
 
       - name: Run snapshot
@@ -34,24 +55,15 @@ jobs:
 
 ### Inputs
 
-- **`cache`** (Optional, Default: `true`)  
-  - Whether to cache RPC responses or not.  
-  - Type: `bool`
+| **Name**             | **Required** | **Default**                           | **Description**                                                                                                        | **Type** |
+| -------------------- | ------------ | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------- |
+| `version`            | No           | `latest`                              | Version to install, e.g. `latest` or a specific version like `v0.0.9`                                                  | string   |
+| `cache`              | No           | `true`                                | Whether to cache Foundry data or not.                                                                                  | bool     |
+| `cache-key`          | No           | `${{ github.job }}-${{ github.sha }}` | The cache key to use for caching.                                                                                      | string   |
+| `cache-restore-keys` | No           | `[${{ github.job }}-]`                | The cache keys to use for restoring the cache.                                                                         | string[] |
+| `token`              | No           | `${{ github.token }}`                 | PAT or GITHUB_TOKEN used to call the GitHub API                                                                        | string   |
 
-- **`version`** (Optional, Default: `nightly`)  
-  - Version to install, e.g., `nightly` or `1.0.0`.  
-  - **Note:** Foundry only has nightly builds for the time being.  
-  - Type: `string`
-
-- **`cache-key`** (Optional, Default: `${{ github.job }}-${{ github.sha }}`)  
-  - The cache key to use for caching.  
-  - Type: `string`
-
-- **`cache-restore-keys`** (Optional, Default: `[${{ github.job }}-]`)  
-  - The cache keys to use for restoring the cache.  
-  - Type: `string[]`
-
-### RPC Caching
+### Caching
 
 By default, this action matches Forge's behavior and caches all RPC responses in the `~/.foundry-zksync/cache/rpc` directory.
 This is done to speed up the tests and avoid hitting the rate limit of your RPC provider.
@@ -117,7 +129,7 @@ For more detail on how to delete caches, read GitHub's docs on
 
 #### Fuzzing
 
-Note that if you are fuzzing in your fork tests, the RPC cache strategy above will not work unless you set a
+Note that if you are fuzzing in your fork tests, the cache strategy above will not work unless you set a
 [fuzz seed](https://book.getfoundry.sh/reference/config/testing#seed). You might also want to reduce your number of RPC
 calls by using [Multicall](https://github.com/mds1/multicall).
 
@@ -141,7 +153,14 @@ for more information.
 
 When opening a PR, you must build the action exactly following the below steps for CI to pass:
 
+Install [nvm](https://github.com/nvm-sh/nvm).
+
 ```console
-$ bun install
-$ bun run build
+$ nvm install
+$ nvm use
+$ npm ci --ignore-scripts
+$ npm run typecheck
+$ npm run build
 ```
+
+You **must** use the Node.js version `24.13.0` to build.

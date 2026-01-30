@@ -1,6 +1,6 @@
 {
   "name": "dutterbutter/foundry-zksync-toolchain",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "license": "SEE LICENSE IN LICENSE",
   "main": "dist/index.js",
   "keywords": [
@@ -14,16 +14,19 @@
     "dapptools"
   ],
   "scripts": {
-    "build": "ncc build src/index.js -o dist --source-map && ncc build src/save.js -o dist/save --source-map"
+    "build": "ncc build src/index.ts -o dist --source-map && ncc build src/save.ts -o dist/save --source-map",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@actions/cache": "^3.1.2",
-    "@actions/core": "^1.8.0",
-    "@actions/github": "^5.1.1",
-    "@actions/tool-cache": "^1.7.1"
+    "@actions/cache": "^5.0.3",
+    "@actions/core": "^2.0.2",
+    "@actions/github": "^7.0.0",
+    "@actions/tool-cache": "^3.0.0"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.33.1",
-    "prettier": "^2.8.2"
+    "@types/node": "^25.0.9",
+    "@vercel/ncc": "^0.38.4",
+    "prettier": "^3.8.0",
+    "typescript": "^5.9.3"
   }
 }
