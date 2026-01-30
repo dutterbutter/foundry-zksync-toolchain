@@ -6,10 +6,18 @@ branding:
   icon: "triangle"
 
 inputs:
+  version:
+    default: "latest"
+    description: |
+      Foundry-ZKsync version.
+
+      This version number has to match a released version of Foundry ZKsync.
+      The default value is `latest`, which will pull the latest stable build.
+    required: false
   cache:
     default: "true"
     description: |
-      Whether to cache RPC responses or not.
+      Whether to cache Foundry data or not.
 
       Caching is activated by default.
     required: false
@@ -28,21 +36,13 @@ inputs:
 
       This key is used to identify the cache to restore. If not provided, a default key consisting of the job id is used.
     required: false
-  version:
-    default: "latest"
-    description: |
-      Foundry-ZKsync version.
-
-      This version number has to match a released version of Foundry ZKsync.
-      The default value is `nightly`, which will pull the latest nightly build.
-    required: false
   token:
     description: "PAT or GITHUB_TOKEN used to call the GitHub API"
     required: false
     default: ${{ github.token }}
 
 runs:
-  using: "node20"
+  using: "node24"
   main: "dist/index.js"
   post: "dist/save/index.js"
   post-if: success()

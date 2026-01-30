@@ -1,0 +1,198 @@
+name: ci
+
+permissions: {}
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "**.md"
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Note: GitHub does not host Alpine runners, so we skip testing there for now.
+        config:
+          - { os: ubuntu-latest, arch: x64 } # foundry_v[ersion]_linux_amd64.tar.gz
+          - { os: ubuntu-24.04-arm, arch: arm64 } # foundry_v[ersion]_linux_arm64.tar.gz
+          - { os: macos-latest, arch: arm64 } # foundry_v[ersion]_darwin_arm64.tar.gz
+          - { os: macos-15-intel, arch: x64 } # foundry_v[ersion]_darwin_amd64.tar.gz
+          - { os: windows-latest, arch: x64 } # foundry_v[ersion]_windows_amd64.zip
+        version: [stable, nightly]
+        network: [ethereum, tempo]
+        include:
+          # Both with and without `v` prefix.
+          - network: ethereum
+            version: 1.5.0
+            config:
+              os: ubuntu-latest
+              arch: x64
+          - network: ethereum
+            version: v1.5.0
+            config:
+              os: ubuntu-latest
+              arch: x64
+        exclude:
+          - network: tempo
+            version: stable
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Rebuild dist/
+        run: npm run build
+
+      - name: Test action installation (${{ matrix.version }})
+        uses: ./
+        with:
+          network: ${{ matrix.network }}
+          version: ${{ matrix.version }}
+          cache: false
+
+      - name: Verify Foundry installation (${{ matrix.network }})
+        shell: bash
+        run: |
+          if [[ "${{ matrix.network }}" == "tempo" ]]; then
+            forge --version
+            cast --version
+          else
+            forge --version
+            cast --version
+            anvil --version
+            chisel --version
+          fi
+
+      - name: Test basic Foundry functionality (${{ matrix.network }})
+        shell: bash
+        run: |
+          if [[ "${{ matrix.network }}" == "tempo" ]]; then
+            forge init -n tempo test-project --force
+          else
+            forge init test-project --force
+          fi
+
+          cd test-project
+          forge build
+          forge test -vvv
+
+  match:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Rebuild dist/
+        run: npm run build
+
+      - name: Compare the expected and actual dist/ directories
+        run: |
+          if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
+            echo "Detected uncommitted changes after build.  See status below:"
+            git diff
+            exit 1
+          fi
+        id: diff
+
+      # If index.js was different than expected, upload the expected version as an artifact
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() && steps.diff.conclusion == 'failure' }}
+        with:
+          name: dist
+          path: dist/
+
+  codeql:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Setup environment (JavaScript)
+        if: matrix.language == 'javascript'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Install dependencies (JavaScript)
+        if: matrix.language == 'javascript'
+        run: npm ci --ignore-scripts
+
+      - name: Build (JavaScript)
+        if: matrix.language == 'javascript'
+        run: npm run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{matrix.language}}"
+
+  ci-success:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - test
+      - match
+      - codeql
+    timeout-minutes: 30
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1
+        with:
+          jobs: ${{ toJSON(needs) }}
